@@ -35,6 +35,8 @@ private:
     //void DrawChessboard();
 
     int CountNearItem(Pieces item, QPoint ptDirection);
+    void decideWhoStart();
+
 
 protected:
     void mousePressEvent(QMouseEvent *e);
@@ -45,6 +47,7 @@ private:
     QVector<Pieces> _pieces;
     bool _isYourTurn; //当前该黑棋下
     EasyAI easyAI;
+
 
 signals:
     void aiTurn();

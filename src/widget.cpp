@@ -9,28 +9,28 @@ Widget::Widget(QWidget *parent)
     //设置开始场景
     this->setFixedSize(1000, 1000);
     connect(ui->pushButton, &QPushButton::clicked, [=]() {
-        QTimer::singleShot(500, this, [=](){
+        QTimer::singleShot(500, this, [=]() {
             _gameWidget = new GameWidget;
             this->hide();
             _gameWidget->show();
             _gameWidget->setDiff(0);
-                });
+        });
     });
     connect(ui->pushButton_2, &QPushButton::clicked, [=]() {
-        QTimer::singleShot(500, this, [=](){
+        QTimer::singleShot(500, this, [=]() {
             _gameWidget = new GameWidget;
             this->hide();
             _gameWidget->show();
             _gameWidget->setDiff(1);
-                });
+        });
     });
     connect(ui->pushButton_3, &QPushButton::clicked, [=]() {
-        QTimer::singleShot(500, this, [=](){
+        QTimer::singleShot(500, this, [=]() {
             _gameWidget = new GameWidget;
             this->hide();
             _gameWidget->show();
             _gameWidget->setDiff(2);
-                });
+        });
     });
 }
 

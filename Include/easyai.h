@@ -19,8 +19,6 @@ private:
 private:
     int score[15][15];
 
-
-
 };
 
 #endif // EASYAI_H

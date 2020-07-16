@@ -4,8 +4,16 @@ GameWidget::GameWidget(QWidget *parent) : QWidget(parent)
 {
     this->setMouseTracking(true);
     this->setFixedSize(1000, 1000);
-    int  rb = QMessageBox::question(NULL, "选择类型", "你是否选择黑棋？", QMessageBox::Yes, QMessageBox::No);
-    if(rb == 16384)
+    decideWhoStart();
+
+}
+GameWidget::~GameWidget()
+{
+}
+void GameWidget::decideWhoStart()
+{
+    int rb = QMessageBox::question(NULL, "选择类型", "你是否选择黑棋？", QMessageBox::Yes, QMessageBox::No);
+    if (rb == 16384)
     {
         _isYourTurn = true;
     }
@@ -13,10 +21,6 @@ GameWidget::GameWidget(QWidget *parent) : QWidget(parent)
     {
         _isYourTurn = false;
     }
-
-}
-GameWidget::~GameWidget()
-{
 }
 void GameWidget::paintEvent(QPaintEvent *)
 {
@@ -27,7 +31,7 @@ void GameWidget::paintEvent(QPaintEvent *)
 
     DrawPieces();         //画棋子
     DrawPieceWithMouse(); //画鼠标（当前方的棋子形状）
-    if(!_isYourTurn)
+    if (!_isYourTurn)
     {
         QPoint pt;
         pt = easyAI.Go(pos);
@@ -35,8 +39,6 @@ void GameWidget::paintEvent(QPaintEvent *)
         pos[pt.x()][pt.y()] = 2;
 
         appendPiece(pt);
-
-
     }
     update();
 }
@@ -52,13 +54,13 @@ void GameWidget::DrawPieces()
     painter.setPen(QPen(QColor(Qt::transparent)));
     static int tmp = 0;
     //使得程序看起来似乎是思考了一下才下子
-    if(tmp != _pieces.size() && _isYourTurn)
+    if (tmp != _pieces.size() && _isYourTurn)
     {
         QElapsedTimer time;
         time.start();
-        while(time.elapsed() < 350)
+        while (time.elapsed() < 350)
         {
-            QCoreApplication::processEvents();   //处理事件
+            QCoreApplication::processEvents(); //处理事件
         }
     }
     for (int i = 0; i < _pieces.size(); i++)
@@ -121,8 +123,13 @@ void GameWidget::checkWin(Pieces piece)
         QMessageBox::information(NULL, "GAME OVER", str, QMessageBox::Yes, QMessageBox::Yes);
         _pieces.clear();
         for (int i = 0; i < 15; i++)
-                for (int j = 0; j < 15; j++)
-                    pos[i][j] = 0;
+        {
+            for (int j = 0; j < 15; j++)
+            {
+                pos[i][j] = 0;
+            }
+        }
+        decideWhoStart();
         return;
     }
     //该另一方下棋了
@@ -132,7 +139,7 @@ void GameWidget::mousePressEvent(QMouseEvent *e)
 {
     //求鼠标点击处的棋子点pt
     QPoint pt;
-    if(_isYourTurn)
+    if (_isYourTurn)
     {
         int x = e->pos().x() - 13, y = e->pos().y() - 16;
         if (x > 975 || y > 960 || x < 0 || y < 0)
@@ -156,7 +163,6 @@ void GameWidget::mousePressEvent(QMouseEvent *e)
     }
     //不存在棋子，就下一个
     appendPiece(pt);
-
 }
 
 int GameWidget::CountNearItem(Pieces piece, QPoint ptDirection)
