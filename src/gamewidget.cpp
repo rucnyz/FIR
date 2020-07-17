@@ -5,7 +5,6 @@ GameWidget::GameWidget(QWidget *parent) : QWidget(parent)
     this->setMouseTracking(true);
     this->setFixedSize(1000, 1000);
     decideWhoStart();
-
 }
 GameWidget::~GameWidget()
 {
@@ -34,9 +33,20 @@ void GameWidget::paintEvent(QPaintEvent *)
     if (!_isYourTurn)
     {
         QPoint pt;
-        pt = easyAI.Go(pos);
+        if (_diff == 0)
+        {
+            pt = easyAI.Go(board);
+        }
+        else if (_diff == 1)
+        {
+            pt = AI.GoNormal(board);
+        }
+        else
+        {
+            pt = AI.GoHard(board);
+        }
         qDebug() << pt.x() << pt.y();
-        pos[pt.x()][pt.y()] = 2;
+        board[pt.x()][pt.y()] = 2;
 
         appendPiece(pt);
     }
@@ -126,7 +136,7 @@ void GameWidget::checkWin(Pieces piece)
         {
             for (int j = 0; j < 15; j++)
             {
-                pos[i][j] = 0;
+                board[i][j] = 0;
             }
         }
         decideWhoStart();
@@ -159,7 +169,7 @@ void GameWidget::mousePressEvent(QMouseEvent *e)
                 return;
             }
         }
-        pos[pt.x()][pt.y()] = 1;
+        board[pt.x()][pt.y()] = 1;
     }
     //不存在棋子，就下一个
     appendPiece(pt);

@@ -16,7 +16,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    src/hardai.cpp \
+    src/chessai.cpp \
     src/easyai.cpp \
     src/gamewidget.cpp \
     src/main.cpp \
@@ -24,11 +24,11 @@ SOURCES += \
     src/widget.cpp
 
 HEADERS += \
+    Include/chessai.h \
     Include/pieces.h \
     Include/gamewidget.h \
     Include/widget.h \
-    Include/easyai.h \
-    Include/hardai.h
+    Include/easyai.h
 
 
 FORMS += \

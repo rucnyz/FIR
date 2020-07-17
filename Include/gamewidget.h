@@ -11,6 +11,7 @@
 
 #include "pieces.h"
 #include "easyai.h"
+#include "chessai.h"
 
 #define RECT_WIDTH 65
 #define RECT_HEIGHT 64
@@ -24,19 +25,17 @@ public:
 
     void setDiff(int diff);
 
-    int pos[15][15] = {{0}};
+    int board[15][15] = {{0}};
 
 private:
     void DrawPieces();
     void DrawChessAtPoint(QPainter &painter, QPoint &pt);
     void DrawPieceWithMouse();
-    void appendPiece(QPoint pos);
+    void appendPiece(QPoint board);
     void checkWin(Pieces piece);
-    //void DrawChessboard();
 
     int CountNearItem(Pieces item, QPoint ptDirection);
     void decideWhoStart();
-
 
 protected:
     void mousePressEvent(QMouseEvent *e);
@@ -47,7 +46,7 @@ private:
     QVector<Pieces> _pieces;
     bool _isYourTurn; //当前该黑棋下
     EasyAI easyAI;
-
+    ChessAI AI;
 
 signals:
     void aiTurn();
