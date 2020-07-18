@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>picture/startmenu.jpg</file>
         <file>picture/table.jpg</file>
+        <file>music/BGM.mp3</file>
     </qresource>
 </RCC>

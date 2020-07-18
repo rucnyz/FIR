@@ -59,7 +59,7 @@ struct EVALUATION
 {
     int score;
     gameResult result;
-    int STAT[8]; //储存部分棋形的个数,下标WIN=1为白连5,LOSE=2为黑连5,FLEX4=3为白活4,BLOCK4=5为白冲4,FLEX3=7为白活3
+    int STAT[8]; //储存部分棋形的个数,下标 WIN=1为白连5,LOSE=2为黑连5,FLEX4=3为白活4,BLOCK4=5为白冲4,FLEX3=7为白活3
 };
 struct POINTS
 { //最佳落子位置,[0]分数最高,[19]分数最低
@@ -78,7 +78,9 @@ public:
     ChessAI();
 
     QPoint GoHard(int (*board)[15]);
+
     QPoint GoNormal(int (*board)[15]);
+    QPoint GoEasy(int (*board)[15]);
 
 private:
     DECISION decision; //储存极大极小搜索得到的要走的位置
@@ -96,16 +98,17 @@ private:
     QPoint findBestMoveGreedy(int C_ME, int (*board)[15]); //贪心算法只看一步,效果还不错,但是目光短浅
 
     //博弈树搜索部分
-private:                                             //博弈树搜索部分
+private:
     void init_tuple6type();                          //对棋型判断数组赋初值
-    POINTS seekPoints(int (*board)[15]);             //生成对于白子的最佳20个落子位置及分数
+    POINTS seekPoints(int (*board)[15]);             //生成对于白子的最佳10个落子位置及分数
     void copyBoard(int A[15][15], int B[15][15]);    //将A棋盘复制到B棋盘
     void reverseBoard(int A[15][15], int B[15][15]); //将A棋盘黑白子颠倒结果传给B棋盘
-    EVALUATION evaluate(int board[15][15]);          //对棋局board的黑子的局势估值函数,还可以判断输赢
+    EVALUATION evaluate(int (*board)[15]);           //对棋局board的黑子的局势估值函数,还可以判断输赢
 
     int analyse(int board[15][15], int depth, int alpha, int beta); //博弈树极大极小搜索加ab剪枝
-    bool analyse_kill(int board[15][15], int depth);                //计算杀棋,若找到杀棋则返回true
-    QList<QPoint> seek_kill_points(int board[15][15]);              //找白棋的连5,活4,冲4,活3的杀棋位置
+    bool analyseKill(int board[15][15], int depth);                 //计算杀棋,若找到杀棋则返回true
+    bool analyseKill_2(int board[15][15], int depth);               //用于集成到博弈树的后面
+    QList<QPoint> seekKillPoints(int board[15][15]);                //找白棋的连5,活4,冲4,活3的杀棋位置
 };
 
 #endif // HARDAI_H

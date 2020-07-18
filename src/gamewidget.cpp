@@ -5,6 +5,10 @@ GameWidget::GameWidget(QWidget *parent) : QWidget(parent)
     this->setMouseTracking(true);
     this->setFixedSize(1000, 1000);
     decideWhoStart();
+    QMediaPlayer *player = new QMediaPlayer;
+    player->setMedia(QUrl("qrc:/music/BGM.mp3"));
+    player->setVolume(20);
+    player->play();
 }
 GameWidget::~GameWidget()
 {
@@ -35,7 +39,7 @@ void GameWidget::paintEvent(QPaintEvent *)
         QPoint pt;
         if (_diff == 0)
         {
-            pt = easyAI.Go(board);
+            pt = AI.GoEasy(board);
         }
         else if (_diff == 1)
         {
@@ -68,7 +72,7 @@ void GameWidget::DrawPieces()
     {
         QElapsedTimer time;
         time.start();
-        while (time.elapsed() < 350)
+        while (time.elapsed() < 500)
         {
             QCoreApplication::processEvents(); //处理事件
         }
@@ -83,6 +87,10 @@ void GameWidget::DrawPieces()
         else
         {
             painter.setBrush(Qt::white);
+            if (i == _pieces.size() - 1)
+            {
+                painter.setPen(Qt::red);
+            }
         }
         DrawChessAtPoint(painter, pieces._pt);
     }
@@ -116,14 +124,14 @@ void GameWidget::appendPiece(QPoint pos)
 void GameWidget::checkWin(Pieces piece)
 {
     //统计4个方向是否五子连
-    int nLeft = CountNearItem(piece, QPoint(-1, 0));
-    int nLeftUp = CountNearItem(piece, QPoint(-1, -1));
-    int nUp = CountNearItem(piece, QPoint(0, -1));
-    int nRightUp = CountNearItem(piece, QPoint(1, -1));
-    int nRight = CountNearItem(piece, QPoint(1, 0));
-    int nRightDown = CountNearItem(piece, QPoint(1, 1));
-    int nDown = CountNearItem(piece, QPoint(0, 1));
-    int nLeftDown = CountNearItem(piece, QPoint(-1, 1));
+    int nLeft = CountNearPiece(piece, QPoint(-1, 0));
+    int nLeftUp = CountNearPiece(piece, QPoint(-1, -1));
+    int nUp = CountNearPiece(piece, QPoint(0, -1));
+    int nRightUp = CountNearPiece(piece, QPoint(1, -1));
+    int nRight = CountNearPiece(piece, QPoint(1, 0));
+    int nRightDown = CountNearPiece(piece, QPoint(1, 1));
+    int nDown = CountNearPiece(piece, QPoint(0, 1));
+    int nLeftDown = CountNearPiece(piece, QPoint(-1, 1));
     if ((nLeft + nRight) >= 4 ||
         (nLeftUp + nRightDown) >= 4 ||
         (nUp + nDown) >= 4 ||
@@ -169,13 +177,13 @@ void GameWidget::mousePressEvent(QMouseEvent *e)
                 return;
             }
         }
-        board[pt.x()][pt.y()] = 1;
+        board[pt.x()][pt.y()] = C_BLACK;
     }
     //不存在棋子，就下一个
     appendPiece(pt);
 }
 
-int GameWidget::CountNearItem(Pieces piece, QPoint ptDirection)
+int GameWidget::CountNearPiece(Pieces piece, QPoint ptDirection)
 {
     int nCount = 0;
     piece._pt += ptDirection;

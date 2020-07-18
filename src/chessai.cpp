@@ -7,10 +7,17 @@ ChessAI::ChessAI()
 }
 QPoint ChessAI::GoHard(int (*board)[15])
 {
-    if (!analyse_kill(board, 16))
+
+    analyse(board, 8, -INT_MAX, INT_MAX);
+
+    return decision.pos;
+}
+QPoint ChessAI::GoNormal(int (*board)[15])
+{
+    if (!analyseKill(board, 16))
     {
         qDebug() << "没找到杀棋";
-        analyse(board, 6, -INT_MAX, INT_MAX);
+        analyse(board, 8, -INT_MAX, INT_MAX);
     }
     else
     {
@@ -18,7 +25,7 @@ QPoint ChessAI::GoHard(int (*board)[15])
     }
     return decision.pos;
 }
-QPoint ChessAI::GoNormal(int (*board)[15])
+QPoint ChessAI::GoEasy(int (*board)[15])
 {
     return findBestMoveGreedy(C_WHITE, board);
 }
@@ -59,9 +66,9 @@ int ChessAI::calcOnePosGreedy(int (*board)[15], int row, int col, int C_ME)
 {
     int sum = 0;
     for (int i = 0; i < 4; ++i)
-    { //四个方向
-        for (int j = 0; j < 5; ++j)
-        {                                                           //每个方向上最多5个五元组
+    {                               //四个方向
+        for (int j = 0; j < 5; ++j) //每个方向上最多5个五元组
+        {
             QPoint start = getXY(row, col, RIGHT + i, j - 4);       //五元组顶点位置
             QPoint end = getXY(start.x(), start.y(), RIGHT + i, 4); //五元组最远位置
             if (checkBound(start.x(), start.y()) && checkBound(end.x(), end.y()))
@@ -412,10 +419,10 @@ void ChessAI::init_tuple6type()
     }
 }
 
-EVALUATION ChessAI::evaluate(int board[15][15])
+EVALUATION ChessAI::evaluate(int (*board)[15])
 {
     //各棋型权重
-    int weight[17] = {0, 1000000, -10000000, 50000, -100000, 400, -100000, 400, -8000, 20, -50, 20, -50, 1, -3, 1, -3};
+    int weight[17] = {0, 1000000, -10000000, 50000, -200000, 400, -100000, 400, -8000, 20, -50, 20, -50, 1, -3, 1, -3};
 
     int i, j, type;
     int stat[4][17]; //统计4个方向上每种棋型的个数
@@ -515,11 +522,11 @@ POINTS ChessAI::seekPoints(int (*board)[15])
 {
     bool B[15][15]; //标记数组
     int worth[15][15];
-    POINTS best_points;
+    POINTS bestPoints;
 
     memset(B, 0, sizeof(B));
-    for (int i = 0; i < 15; ++i)
-    { //每个非空点附近8个方向延伸3个深度,若不越界则标记为可走
+    for (int i = 0; i < 15; ++i) //每个非空点附近8个方向延伸3个深度,若不越界则标记为可走
+    {
         for (int j = 0; j < 15; ++j)
         {
             if (board[i][j] != C_NONE)
@@ -555,9 +562,9 @@ POINTS ChessAI::seekPoints(int (*board)[15])
             }
         }
     }
-
+    //排出前十名
     int w;
-    for (int k = 0; k < 20; ++k)
+    for (int k = 0; k < 10; ++k)
     {
         w = -INT_MAX;
         for (int i = 0; i < 15; ++i)
@@ -568,19 +575,19 @@ POINTS ChessAI::seekPoints(int (*board)[15])
                 {
                     w = worth[i][j];
                     QPoint tmp(i, j);
-                    best_points.pos[k] = tmp;
+                    bestPoints.pos[k] = tmp;
                 }
             }
         }
 
-        int x = best_points.pos[k].x(), y = best_points.pos[k].y();
+        int x = bestPoints.pos[k].x(), y = bestPoints.pos[k].y();
         board[x][y] = C_WHITE;
-        best_points.score[k] = evaluate(board).score;
+        bestPoints.score[k] = evaluate(board).score;
         board[x][y] = C_NONE;
 
-        worth[best_points.pos[k].x()][best_points.pos[k].y()] = -INT_MAX; //清除掉上一点,计算下一点的位置和分数
+        worth[bestPoints.pos[k].x()][bestPoints.pos[k].y()] = -INT_MAX; //清除掉上一点,计算下一点的位置和分数
     }
-    return best_points;
+    return bestPoints;
 }
 
 void ChessAI::copyBoard(int (*A)[15], int (*B)[15])
@@ -616,24 +623,23 @@ void ChessAI::reverseBoard(int (*A)[15], int (*B)[15])
 
 int ChessAI::analyse(int (*board)[15], int depth, int alpha, int beta)
 {
-    EVALUATION EVAL = evaluate(board);
-    if (depth == 0 || EVAL.result != R_DRAW)
-    { //抵达最深层/如果模拟落子可以分出输赢，那么直接返回结果，不需要再搜索
+    if (depth == 0) //抵达最深层
+    {
         nodeNum += 1;
-        if (depth == 0)
-        {
-            POINTS P;
-            P = seekPoints(board);
-
-            return P.score[0]; //返回最佳位置对应的最高分
-        }
-        else
-            return EVAL.score;
+        POINTS P;
+        P = seekPoints(board);
+        //analyseKill_2(board, 16);
+        return P.score[0]; //返回最佳位置对应的最高分
+    }
+    EVALUATION EVAL = evaluate(board);
+    if (EVAL.result != R_DRAW)
+    { //如果模拟落子可以分出输赢，那么直接返回结果，不需要再搜索
+        nodeNum += 1;
+        return EVAL.score;
     }
     else if (depth % 2 == 0)
     { //max层,我方(白)决策
         //qDebug()<<"白方决策！";
-
         POINTS P = seekPoints(board);
 
         for (int i = 0; i < 10; ++i)
@@ -642,12 +648,12 @@ int ChessAI::analyse(int (*board)[15], int depth, int alpha, int beta)
             int sameBoard[15][15];
             copyBoard(board, sameBoard);
 
-            sameBoard[P.pos[i].x()][P.pos[i].y()] = C_WHITE; //模拟己方落子,不能用board,否则可能改变board的信息
+            sameBoard[P.pos[i].x()][P.pos[i].y()] = C_WHITE; //模拟己方落子
             int a = analyse(sameBoard, depth - 1, alpha, beta);
             if (a > alpha)
             {
                 alpha = a;
-                if (depth == 6)
+                if (depth == 8)
                 {
                     qDebug() << "set decision:" << P.pos[i].x() << P.pos[i].y();
 
@@ -656,8 +662,9 @@ int ChessAI::analyse(int (*board)[15], int depth, int alpha, int beta)
                     decision.eval = a;
                 }
             }
+            //剪枝
             if (beta <= alpha)
-                break; //剪枝
+                break;
         }
         return alpha;
     }
@@ -687,32 +694,39 @@ int ChessAI::analyse(int (*board)[15], int depth, int alpha, int beta)
     }
 }
 
-bool ChessAI::analyse_kill(int (*board)[15], int depth)
+bool ChessAI::analyseKill(int (*board)[15], int depth)
 {
-    EVALUATION EVAL = evaluate(board);
-    if (depth == 0 || EVAL.result != R_DRAW)
-    {
-        if (depth == 0)
-        { //若抵达最深层,走一步对白棋的最好位置,若白棋还没赢则返回false
-            POINTS P;
-            P = seekPoints(board);
-            board[P.pos[0].x()][P.pos[0].y()] = C_WHITE;
+    if (depth == 0)
+    { //若抵达最深层,走一步对白棋的最好位置,若白棋还没赢则返回false
+        POINTS P;
+        P = seekPoints(board);
+        board[P.pos[0].x()][P.pos[0].y()] = C_WHITE;
 
-            gameResult result = evaluate(board).result;
-            if (result == R_WHITE)
-                return true;
-            else
-                return false;
+        gameResult result = evaluate(board).result;
+        if (result == R_WHITE)
+        {
+
+            return true;
         }
-        else if (EVAL.result == R_WHITE)
-            return true; //找到白棋杀棋
         else
+            return false;
+    }
+    EVALUATION EVAL = evaluate(board);
+    if (EVAL.result != R_DRAW)
+    {
+        if (EVAL.result == R_WHITE)
+        {
+            return true; //找到白棋杀棋
+        }
+        else
+        {
             return false; //白棋输
+        }
     }
     else if (depth % 2 == 0)
     { //max层,我方(白)决策
         if (depth == 16 || depth == 14)
-        { //最开始4层选所有能走的10个点
+        { //最开始选所有能走的10个点
             POINTS P = seekPoints(board);
             for (int i = 0; i < 10; ++i)
             {
@@ -721,24 +735,24 @@ bool ChessAI::analyse_kill(int (*board)[15], int depth)
 
                 sameBoard[P.pos[i].x()][P.pos[i].y()] = C_WHITE; //模拟己方落子
 
-                if (analyse_kill(sameBoard, depth - 1))
+                if (analyseKill(sameBoard, depth - 1))
                 {
                     if (depth == 16)
                     {
-                        qDebug() << "kill set decision:" << P.pos[i].x() << P.pos[i].y();
+                        //qDebug() << "kill set decision:" << P.pos[i].x() << P.pos[i].y();
 
                         decision.pos.setX(P.pos[i].x());
                         decision.pos.setY(P.pos[i].y());
-                        decision.eval = INT_MAX; //测试一下..
+                        decision.eval = INT_MAX;
                     }
                     return true;
                 }
             }
             return false;
         }
-        else
-        {                                                      //后面只选杀棋点
-            QList<QPoint> pointList = seek_kill_points(board); //产生杀棋点
+        else //后面只选杀棋点
+        {
+            QList<QPoint> pointList = seekKillPoints(board); //产生杀棋点
 
             if (pointList.length() == 0)
                 return false; //没有杀棋点
@@ -750,7 +764,7 @@ bool ChessAI::analyse_kill(int (*board)[15], int depth)
 
                 sameBoard[i.x()][i.y()] = C_WHITE; //模拟己方落子
 
-                if (analyse_kill(sameBoard, depth - 1))
+                if (analyseKill(sameBoard, depth - 1))
                 {
                     /*if(depth==16){
                         qDebug()<<"kill set decision:"<<i.x()<<i.y();
@@ -774,11 +788,11 @@ bool ChessAI::analyse_kill(int (*board)[15], int depth)
         copyBoard(board, sameBoard);
         sameBoard[P.pos[0].x()][P.pos[0].y()] = C_BLACK; //模拟敌方落子:只走最好的一步
         //无需剪枝
-        return analyse_kill(sameBoard, depth - 1);
+        return analyseKill(sameBoard, depth - 1);
     }
 }
 
-QList<QPoint> ChessAI::seek_kill_points(int (*board)[15])
+QList<QPoint> ChessAI::seekKillPoints(int (*board)[15])
 {
     QList<QPoint> pointList;
 
@@ -787,7 +801,7 @@ QList<QPoint> ChessAI::seek_kill_points(int (*board)[15])
     int sameBoard[15][15];
     copyBoard(board, sameBoard);
 
-    for (int i = 0; i < 20; ++i)
+    for (int i = 0; i < 10; ++i)
     {
         sameBoard[P.pos[i].x()][P.pos[i].y()] = C_WHITE; //模拟落子
         if (evaluate(sameBoard).STAT[WIN] > 0)
@@ -809,4 +823,102 @@ QList<QPoint> ChessAI::seek_kill_points(int (*board)[15])
         sameBoard[P.pos[i].x()][P.pos[i].y()] = C_NONE; //还原落子
     }
     return pointList;
+}
+
+bool ChessAI::analyseKill_2(int (*board)[15], int depth)
+{
+    if (depth == 0)
+    { //若抵达最深层,走一步对白棋的最好位置,若白棋还没赢则返回false
+        POINTS P;
+        P = seekPoints(board);
+        board[P.pos[0].x()][P.pos[0].y()] = C_WHITE;
+
+        gameResult result = evaluate(board).result;
+        if (result == R_WHITE)
+        {
+
+            return true;
+        }
+        else
+            return false;
+    }
+    EVALUATION EVAL = evaluate(board);
+    if (EVAL.result != R_DRAW)
+    {
+        if (EVAL.result == R_WHITE)
+        {
+            return true; //找到白棋杀棋
+        }
+        else
+        {
+            return false; //白棋输
+        }
+    }
+    else if (depth % 2 == 0)
+    {   //max层,我方(白)决策
+        //        if (depth == 16 || depth == 14)
+        //        { //最开始选所有能走的10个点
+        //            POINTS P = seekPoints(board);
+        //            for (int i = 0; i < 10; ++i)
+        //            {
+        //                int sameBoard[15][15];
+        //                copyBoard(board, sameBoard);
+
+        //                sameBoard[P.pos[i].x()][P.pos[i].y()] = C_WHITE; //模拟己方落子
+
+        //                if (analyseKill(sameBoard, depth - 1))
+        //                {
+        //                    if (depth == 16)
+        //                    {
+        //                        //qDebug() << "kill set decision:" << P.pos[i].x() << P.pos[i].y();
+
+        //                        decision.pos.setX(P.pos[i].x());
+        //                        decision.pos.setY(P.pos[i].y());
+        //                        decision.eval = INT_MAX;
+        //                    }
+        //                    return true;
+        //                }
+        //            }
+        //            return false;
+        //        }
+        //        else //后面只选杀棋点
+        //        {
+        QList<QPoint> pointList = seekKillPoints(board); //产生杀棋点
+
+        if (pointList.length() == 0)
+            return false; //没有杀棋点
+        for (auto i : pointList)
+        {
+            //qDebug()<<"白方模拟下"<<P.pos[i].x()<<","<<P.pos[i].y();
+            int sameBoard[15][15];
+            copyBoard(board, sameBoard);
+
+            sameBoard[i.x()][i.y()] = C_WHITE; //模拟己方落子
+
+            if (analyseKill(sameBoard, depth - 1))
+            {
+                /*if(depth==16){
+                        qDebug()<<"kill set decision:"<<i.x()<<i.y();
+                        decision.pos.setX(i.x());
+                        decision.pos.setY(i.y());
+                        decision.eval=INT_MAX;//测试一下..
+                    }*/
+                return true;
+            }
+        }
+        return false;
+        //}
+    }
+    else
+    { //min层,敌方(黑)决策,只下对自己最好的棋
+        int rBoard[15][15];
+        reverseBoard(board, rBoard);
+        POINTS P = seekPoints(rBoard); //找对于黑子的最佳位置,需要将棋盘不同颜色反转,因为seekPoint是求白色方的最佳位置
+
+        int sameBoard[15][15];
+        copyBoard(board, sameBoard);
+        sameBoard[P.pos[0].x()][P.pos[0].y()] = C_BLACK; //模拟敌方落子:只走最好的一步
+        //无需剪枝
+        return analyseKill(sameBoard, depth - 1);
+    }
 }

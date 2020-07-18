@@ -12,7 +12,7 @@
 #include "pieces.h"
 #include "easyai.h"
 #include "chessai.h"
-
+#include <QMediaPlayer>
 #define RECT_WIDTH 65
 #define RECT_HEIGHT 64
 
@@ -34,7 +34,7 @@ private:
     void appendPiece(QPoint board);
     void checkWin(Pieces piece);
 
-    int CountNearItem(Pieces item, QPoint ptDirection);
+    int CountNearPiece(Pieces item, QPoint ptDirection);
     void decideWhoStart();
 
 protected:
@@ -45,7 +45,6 @@ private:
     int _diff = 0;
     QVector<Pieces> _pieces;
     bool _isYourTurn; //当前该黑棋下
-    EasyAI easyAI;
     ChessAI AI;
 
 signals:
